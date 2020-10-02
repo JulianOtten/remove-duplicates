@@ -3,7 +3,7 @@
 
 # Example code
 ```js
-const { removeDuplicates } = require("./index");
+const { removeDuplicates } = require("@kingotten/remove-duplicates");
 
 const folderPath = `path/to/your/folder`;
 
