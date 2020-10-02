@@ -1,0 +1,20 @@
+{
+  "name": "@kingotten/remove-duplicates",
+  "version": "1.2.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "duplicates": "^1.1.1",
+    "growl": "^1.10.5",
+    "yargs": "^16.0.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "Julian Otten",
+  "license": "ISC",
+  "bin": {
+    "rmdupes": "rmdupes.js"
+  }
+}
