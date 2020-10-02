@@ -15,7 +15,9 @@ removeDuplicates(folderPath);
 `npm i -g @kingotten/remove-duplicates`
 
 # Global Use
-`rmdupes .`
-`rmdupes foldername`
-`rmdupes foldername/subfoldername`
-`rmdupes /absolute/path/to/folder`
+```
+rmdupes .
+rmdupes foldername
+rmdupes foldername/subfoldername
+rmdupes /absolute/path/to/folder
+```
