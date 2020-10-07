@@ -4,9 +4,7 @@
   "description": "`npm i @kingotten/remove-duplicates`",
   "main": "index.js",
   "dependencies": {
-    "duplicates": "^1.1.1",
-    "growl": "^1.10.5",
-    "yargs": "^16.0.3"
+    "hash-file": "^3.0.0"
   },
   "devDependencies": {},
   "scripts": {

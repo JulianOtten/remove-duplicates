@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 const path = require('path');
-const { removeDuplicates } = require("./index");
+const { RemoveDuplicates } = require("./index");
+
 
 if(process.argv[2] == undefined)
 {
@@ -8,4 +9,14 @@ if(process.argv[2] == undefined)
 }
 const folderPath = `${process.cwd()}${path.sep}${process.argv[2]}`;
 
-removeDuplicates(folderPath);
+const settings = {
+  dry_run: true,
+  recursive: true,
+  depth: "all",
+  quiet: true,
+}
+
+let files = RemoveDuplicates(folderPath, settings);
+
+files.forEach(file => console.log(file));
+
