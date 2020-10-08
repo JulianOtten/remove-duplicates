@@ -13,7 +13,6 @@ const argv = require("yargs")
 })
 .option("quiet", {
   alias: "q",
-  default: false,
   describe: "run command without information logging"
 })
 .option("depth", {
@@ -24,7 +23,7 @@ const argv = require("yargs")
 
 const rmdupes = async () => {
   if (argv._[0] == undefined) {
-      argv.help();
+    return console.log("please profide a folder");
   }
   const folderPath = `${process.cwd()}${path.sep}${argv._[0]}`;
 

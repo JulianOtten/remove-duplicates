@@ -14,10 +14,19 @@ async function RemoveDuplicates(path, options = {depth: 0, recursive: false, dry
   // check if we have iterations yet, if not, create the property to compare to the depth, if we do, increment it
   if(options.iterations == undefined) options.iterations = 0;
   else options.iterations++;
+  
+  // error handle all other properties
+  if(options.depth == undefined) options.depth = 0;
+  if(options.recursive == undefined) options.recursive = false;
+  if(options.dry_run == undefined) options.dry_run = false;
+  if(options.quiet == undefined) options.quiet = true;
   // duplicates array of all the files that were deleted
   let deletedFiles = [];
   // read the main dir
   let files = fs.readdirSync(path)
+  // sort files into order
+  files.sort();
+  files.reverse();
   // define hashes array to compare all our hashes too
   let fileHashes = [];
   // loop over each file
