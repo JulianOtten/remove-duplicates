@@ -19,6 +19,9 @@ const argv = require("yargs")
   default: 0,
   describe: "how many folders deep to check"
 })
+.option("filter", {
+  describe: "Filter for files you want to look through, using regex"
+})
 .argv
 
 const rmdupes = async () => {
@@ -32,6 +35,7 @@ const rmdupes = async () => {
       recursive: argv.recursive,
       depth: argv.depth,
       quiet: argv.quiet,
+      filter: argv.filter,
   };
 
   await RemoveDuplicates(folderPath, settings);
