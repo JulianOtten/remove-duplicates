@@ -1,5 +1,6 @@
 # rmdupes
-Rmdupes is a command used to remove duplicate files from folders
+Rmdupes is a command used to remove duplicate files from folders.
+
 The way it works is, we hash the contents of a file, and compare the hashes with eachother, to check if the files contain the same content
 If they have the same content, we delete the file.
 
