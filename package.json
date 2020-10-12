@@ -9,7 +9,6 @@
   },
   "devDependencies": {},
   "scripts": {
-    "test": "mocha",
     "git-push": "git add * && git commit -m \"Auto commit\" && git push"
   },
   "author": "Julian Otten",
@@ -21,7 +20,7 @@
     "type": "git",
     "url": "git+https://github.com/JulianOtten/remove-duplicates.git"
   },
-  "keywords": [],
+  "keywords": ["remove duplicates", "duplicates", "CLI", "remove duplicate files", "recursive"],
   "bugs": {
     "url": "https://github.com/JulianOtten/remove-duplicates/issues"
   },

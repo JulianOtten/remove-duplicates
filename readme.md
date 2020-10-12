@@ -12,11 +12,22 @@ Be careful running this on extremely large data sets, you might overload your me
 
 # Example code
 ```js
-const { removeDuplicates } = require("@kingotten/remove-duplicates");
+const { RemoveDuplicates } = require("@kingotten/remove-duplicates");
 
-const folderPath = `path/to/your/folder`;
+const settings = {
+    dry_run: false, // run without deleting files
+    recursive: true, // run in subfolders (does not compare to subfolders tho)
+    depth: 2, // check 2 folders deep
+    quiet: true, // run without logging information about the command
+    filter: "", // regex filter performed on each filename
+};
 
-removeDuplicates(folderPath);
+// use with single string
+const path = "path/to/folder";
+await RemoveDuplicates(path, settings);
+// use with array
+const paths = ["PathA", "PathB", "PathC"];
+await RemoveDuplicates(paths, settings);
 ```
 
 # Global install
@@ -25,8 +36,10 @@ removeDuplicates(folderPath);
 
 # Global Use
 ```
+rmdupes -h
 rmdupes .
-rmdupes foldername
-rmdupes foldername/subfoldername
-rmdupes /absolute/path/to/folder
+rmdupes FolderA
+rmdupes FolderA FolderB
+rmdupes FolderA -d -r -D=2
+rmdupes E:/Absolute/Path/To/Folder
 ```
