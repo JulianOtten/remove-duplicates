@@ -7,11 +7,11 @@ const { InvalidPathError, PathIsNotADirectoryError } = require("./errors");
 /**
  * remove duplicate images from a path
  * @param {string | string[]} path Path(s) to the folder(s) to check
- * @param {recurisve, dry_run, quiet, depth, filter} options
- * @return {Promise<String[]>} Array of all the files it removed
+ * @param {recurisve, dry_run, quiet, depth, filter, hard_compare} options
+ * @return {Promise<string[]>} Array of all the files it removed
  * @throws { InvalidPathError }
  */
-async function RemoveDuplicates(path, options = {depth: 0, recursive: false, dry_run: false, quiet: false})
+async function RemoveDuplicates(path, options = {depth: 0, recursive: false, dry_run: false, quiet: false, hard_compare: false})
 {
   // check if we have iterations yet, if not, create the property to compare to the depth, if we do, increment it
   if(options.iterations == undefined) options.iterations = 0;
@@ -22,27 +22,26 @@ async function RemoveDuplicates(path, options = {depth: 0, recursive: false, dry
   if(options.recursive == undefined) options.recursive = false;
   if(options.dry_run == undefined) options.dry_run = false;
   if(options.quiet == undefined) options.quiet = false;
+  if(options.hard_compare == undefined) options.hard_compare = false;
   // destruct the options object
-  let {iterations, depth, recursive, dry_run, quiet, filter} = options;
+  let {iterations, depth, recursive, dry_run, quiet, filter, hard_compare} = options;
   // duplicates array of all the files that were deleted
   let deletedFiles = [];
   // define hashes array to compare all our hashes too
   let fileHashes = [];
+  // check if we have a fileHashes object passed from different function, and if we want to hard compare each file, and assign it to the current array
+  if(options.fileHashes !== undefined && hard_compare) {
+    fileHashes = options.fileHashes;
+    // remove the property from the options object to prevent it from being passed around too much
+    delete options.fileHashes;
+  } 
   // if the user provided an array, handle it differently
-  if(typeof path === "object")
-  {
+  if(typeof path === "object") {
     // loop over each path in the input array
-    for(p of path)
-    {
-      let removed = await RemoveDuplicates(p, {
-        iterations,
-        depth,
-        recursive,
-        dry_run,
-        quiet,
-        filter,
-      });
-      deletedFiles = [...deletedFiles, removed];
+    for(p of path) {
+      let result = await RemoveDuplicates(p, {...options, fileHashes});
+      deletedFiles = [...deletedFiles, ...result];
+      // if(hard_compare) fileHashes = [...fileHashes, ...result.fileHashes];
     }
     return deletedFiles;
   }
@@ -56,9 +55,12 @@ async function RemoveDuplicates(path, options = {depth: 0, recursive: false, dry
   }
   // read the main dir
   let files = fs.readdirSync(path);
-  // sort files into order. given file a.txt and a (2).txt, this will ensure a (2).txt gets removed rather than a.txt (just a personal preference)
-  files.sort();
-  files.reverse();
+
+  // sort out all dirs and files, and put all the files before the dirs in alphabetical order
+  let dirs = files.filter(file => fs.lstatSync(`${path}${pathModule.sep}${file}`).isDirectory()).sort();
+  let filesFiltered = files.filter(file => fs.lstatSync(`${path}${pathModule.sep}${file}`).isFile()).sort();
+  files = [...dirs, ...filesFiltered].reverse();
+
   // if we have a regex filter set, try filter through all the files
   if(filter != undefined && filter != null && filter != "")
   {
@@ -77,15 +79,9 @@ async function RemoveDuplicates(path, options = {depth: 0, recursive: false, dry
     if(info.isDirectory()) {
       if(recursive && iterations !== depth)
       {
-        let removed = await RemoveDuplicates(filePath, {
-          iterations,
-          depth,
-          recursive,
-          dry_run,
-          quiet,
-          filter,
-        });
-        deletedFiles = [...deletedFiles, ...removed];
+        let result = await RemoveDuplicates(filePath, {...options, fileHashes});
+        deletedFiles = [...deletedFiles, ...result];
+        // if(hard_compare) fileHashes = [...fileHashes, ...result.fileHashes];
       }
       continue;
     } 

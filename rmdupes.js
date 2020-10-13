@@ -2,7 +2,9 @@
 const path = require("path");
 const { RemoveDuplicates } = require("./index");
 const argv = require("yargs")
-.usage("usage: rmdupes <path> [args]")
+.usage("usage: rmdupes <path> [options]")
+.alias("v", "version")
+.alias("h", "help")
 .option("dry_run", {
   alias: "d",
   describe: "run command without deleting files",
@@ -24,28 +26,30 @@ const argv = require("yargs")
   describe: "Filter for files you want to look through, using regex",
   alias: "f"
 })
+.option("hard_compare", {
+  describe: "Compare folders with eachother, only keeping the first file that has been found",
+  alias: "H"
+})
 .demandCommand()
 .argv
 
 const rmdupes = async () => {
-  
   const settings = {
     dry_run: argv.dry_run,
     recursive: argv.recursive,
     depth: argv.depth,
     quiet: argv.quiet,
     filter: argv.filter,
+    hard_compare: argv.hard_compare,
   };
   
-  
   try {
-    for(folder of argv._) {
-      const folderPath = `${process.cwd()}${path.sep}${folder}`;
-      await RemoveDuplicates(folderPath, settings);
-    }
+    let files = argv._.map(folder => `${process.cwd()}${path.sep}${folder}`);
+    let result = await RemoveDuplicates(files, settings);
+    console.log(`Removed ${result.length} files`);
   }
   catch(e) {
-    console.error(e);
+    console.error(e.message);
   }
 }
 rmdupes();

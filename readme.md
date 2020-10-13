@@ -35,7 +35,7 @@ await RemoveDuplicates(paths, settings);
 
 `npm i -g @kingotten/remove-duplicates`
 
-# Global Use
+# Global Use Examples
 ```
 rmdupes -h
 rmdupes .
