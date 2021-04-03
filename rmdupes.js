@@ -15,10 +15,11 @@ const argv = require("yargs")
 })
 .option("quiet", {
   alias: "q",
+  default: false,
   describe: "run command without information logging"
 })
 .option("depth", {
-  default: 0,
+  default: "all",
   alias: "D",
   describe: "how many folders deep to check"
 })
@@ -34,6 +35,7 @@ const argv = require("yargs")
 .argv
 
 const rmdupes = async () => {
+  let startTime = process.hrtime();
   const settings = {
     dry_run: argv.dry_run,
     recursive: argv.recursive,
@@ -46,10 +48,18 @@ const rmdupes = async () => {
   try {
     let files = argv._.map(folder => `${process.cwd()}${path.sep}${folder}`);
     let result = await RemoveDuplicates(files, settings);
-    console.log(`Removed ${result.length} files`);
+    let found = ((argv.dry_run) ? `Found` : `Removed`) + ` ${result.length} files`;
+    console.log(found);
+    let diff = process.hrtime(startTime)[0]; 
+    if(!argv.quiet) console.log(`Time taken: ${sToTime(diff)}`);
   }
   catch(e) {
     console.error(e.message);
   }
 }
+
+function sToTime(duration) {
+  return new Date(duration * 1000).toISOString().substr(11,8);
+}
+
 rmdupes();

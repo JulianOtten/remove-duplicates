@@ -11,7 +11,7 @@ const { InvalidPathError, PathIsNotADirectoryError } = require("./errors");
  * @return {Promise<string[]>} Array of all the files it removed
  * @throws { InvalidPathError }
  */
-async function RemoveDuplicates(path, options = {depth: 0, recursive: false, dry_run: false, quiet: false, hard_compare: false})
+async function RemoveDuplicates(path, options = {depth: 0, recursive: false, dry_run: false, quiet: true, hard_compare: false})
 {
   // check if we have iterations yet, if not, create the property to compare to the depth, if we do, increment it
   if(options.iterations == undefined) options.iterations = 0;
