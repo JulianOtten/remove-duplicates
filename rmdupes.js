@@ -31,6 +31,11 @@ const argv = require("yargs")
   describe: "Compare folders with eachother, only keeping the first file that has been found",
   alias: "H"
 })
+.option("percentage", {
+  describe: "Percetange of the images that has to differ (0 being fully matched, 100 being completely different)",
+  alias: "p",
+  default: 0
+})
 .demandCommand()
 .argv
 
@@ -43,6 +48,7 @@ const rmdupes = async () => {
     quiet: argv.quiet,
     filter: argv.filter,
     hard_compare: argv.hard_compare,
+    percentage: argv.percentage
   };
   
   try {

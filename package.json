@@ -5,9 +5,9 @@
   "main": "index.js",
   "dependencies": {
     "hash-file": "^3.0.0",
+    "jimp": "^0.16.1",
     "yargs": "^16.0.3"
   },
-  "devDependencies": {},
   "scripts": {
     "git-push": "git add * && git commit -m \"Auto commit\" && git push"
   },
