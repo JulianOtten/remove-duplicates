@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 const path = require("path");
 const { RemoveDuplicates } = require("./index");
+const os = require("os");
+const fs = require('fs');
+const pathModule = require("path");
 const argv = require("yargs")
 .usage("usage: rmdupes <path> [options]")
 .alias("v", "version")
@@ -36,6 +39,26 @@ const argv = require("yargs")
   alias: "p",
   default: 0
 })
+.option("threads", {
+  describe: "Threads to use when hashing and comparing",
+  alias: "t",
+  default: os.cpus().length * 2
+})
+.option("json", {
+  describe: "output in json string, or save json to file if outfile is defined",
+  default: false,
+  type: "boolean"
+})
+.option("outfile", {
+  describe: "name of the output file when used with json output",
+  default: "",
+  type: "string"
+})
+.option("verbose", {
+  describe: "more output logging, mainly for debugging",
+  alias: "v",
+  default: false
+})
 .demandCommand()
 .argv
 
@@ -48,19 +71,34 @@ const rmdupes = async () => {
     quiet: argv.quiet,
     filter: argv.filter,
     hard_compare: argv.hard_compare,
-    percentage: argv.percentage
+    percentage: argv.percentage,
+    threads: argv.threads,
+    verbose: argv.verbose
   };
   
   try {
     let files = argv._.map(folder => `${process.cwd()}${path.sep}${folder}`);
     let result = await RemoveDuplicates(files, settings);
+
+    if(argv.json && argv.outfile == "") {
+      let json = JSON.stringify(result, null, 4);
+      console.log(json);
+    }
+
+    if(argv.outfile.length > 0 && argv.json) {
+      let fileName = argv.json;
+      fileName = pathModule.basename(fileName, "." + fileName.split(".").splice(-1,1)[0]);
+      fs.writeFileSync(`${process.cwd()}${path.sep}${fileName}.json`, JSON.stringify(result, null, 4));
+      console.log(`output written to ${fileName}.json`);
+    }
+
     let found = ((argv.dry_run) ? `Found` : `Removed`) + ` ${result.length} files`;
     console.log(found);
     let diff = process.hrtime(startTime)[0]; 
     if(!argv.quiet) console.log(`Time taken: ${sToTime(diff)}`);
   }
   catch(e) {
-    console.error(e.message);
+    console.error(e);
   }
 }
 

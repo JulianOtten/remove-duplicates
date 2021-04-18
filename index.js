@@ -4,6 +4,12 @@ const hash_file = require("hash-file");
 const pathModule = require("path");
 const { InvalidPathError, PathIsNotADirectoryError } = require("./errors");
 const jimp = require("jimp");
+const {
+    Worker, isMainThread, parentPort, workerData, threadId
+} = require('worker_threads');
+const {hashFiles, compareHashes, initFunctionsFile} = require("./worker/functions.js");
+const os = require("os");
+const { settings } = require("cluster");
 
 /**
  * remove duplicate images from a path
@@ -20,6 +26,8 @@ async function RemoveDuplicates(
         dry_run: false,
         quiet: true,
         hard_compare: false,
+        percentage: 0,
+        threads: undefined
     }
 ) {
     // check if we have iterations yet, if not, create the property to compare to the depth, if we do, increment it
@@ -33,6 +41,11 @@ async function RemoveDuplicates(
     if (options.quiet == undefined) options.quiet = false;
     if (options.hard_compare == undefined) options.hard_compare = false;
     if (options.percentage == undefined) options.percentage = 0;
+    if (options.threads == undefined) options.percentage = os.cpus().length * 2;
+    if (options.verbose == undefined) options.verbose = false;
+    
+    process.env.RMDUPES_OPTIONS = JSON.stringify(options);
+
     // destruct the options object
     let {
         iterations,
@@ -43,6 +56,8 @@ async function RemoveDuplicates(
         filter,
         hard_compare,
         percentage,
+        threads,
+        verbose,
     } = options;
     // duplicates array of all the files that were deleted
     let deletedFiles = [];
@@ -100,60 +115,71 @@ async function RemoveDuplicates(
         var regex = new RegExp(pattern);
         files = files.filter((file) => file.match(regex));
     }
-    // loop over each file
-    for (let file of files) {
-        const filePath = `${path}${pathModule.sep}${file}`;
-        if(recursive) {
+
+    files = files.map(f => {
+        return `${path}${pathModule.sep}${f}`
+    });
+
+    files = files.filter(f => {
+        let ext = pathModule.extname(f);
+        return (ext == ".jpeg" || ext == ".jpg" || ext == ".png" || ext == ".bpm" || ext == ".tiff" || ext == ".gif")
+    });
+
+    if(percentage == 0)
+    {
+        for(let file of files) {
+            const filePath = file;
             const info = fs.lstatSync(filePath);
             // if we want recursion and we havent reached the max depth yet, call same function, if we dont, just return to skip this iteration
-            if (info.isDirectory()) {
-                if (iterations !== depth) {
-                    let result = await RemoveDuplicates(filePath, {
-                        ...options,
-                        fileHashes,
-                    });
-                    deletedFiles = [...deletedFiles, ...result];
-                    // if(hard_compare) fileHashes = [...fileHashes, ...result.fileHashes];
+            if(info.isDirectory()) {
+              if(recursive && iterations !== depth)
+              {
+                let result = await RemoveDuplicates(filePath, {...options, fileHashes});
+                deletedFiles = [...deletedFiles, ...result];
+                // if(hard_compare) fileHashes = [...fileHashes, ...result.fileHashes];
+              }
+              continue;
+            } 
+            let hash = await hash_file(filePath)
+            // see if hash exists, if not, add to hashes array, if it does, remove file and log this info
+            // if we have dry_run defined, we dont remove the file yet, but display it
+            if(!fileHashes.includes(hash)) fileHashes = [...fileHashes, hash];
+            else {
+                if(!dry_run) {
+                    fs.unlinkSync(filePath);
                 }
-                continue;
+                // if we log info, log the removal of the file
+                if(!quiet) {
+                    let msg = (dry_run) ? "Found" : "Removed";
+                    console.log(`${msg} ${filePath}`);
+                } 
+                deletedFiles = [...deletedFiles, filePath];
             }
         }
-        // console.log(`reading ${filePath}`);
-        // hash the file contents to compare with eachother
-        let jimpFile = await jimp.read(filePath);
-        // console.log(`hashing ${filePath}`);
-        let hash = jimpFile.pHash();
-
-        let dup = false;
-        for(let h of fileHashes)
-        {
-            let distance = jimpFile.distanceFromHash(h.hash)
-            let per = jimp.compareHashes(hash, h.hash);
-            if(distance * 100 < percentage || per * 100 < percentage){
-                dup = true;
-                break;
-            }
-        }
-        // no dup, add hash to fileHashes and continue scanning
-        if(!dup) {
-            fileHashes = [...fileHashes, {
-                hash,
-                filePath
-            }];
-            continue;
-        }
-        // if we found a dup, remove file
-        if (!dry_run) {
-            //fs.unlinkSync(filePath);
-        }
-        // if we log info, log the removal of the file
-        if (!quiet) {
-            let msg = dry_run ? "Found" : "Removed";
-            console.log(`${msg} ${filePath}`);
-        }
-        deletedFiles = [...deletedFiles, filePath];
     }
+    else
+    {
+        // return console.log(files);
+        initFunctionsFile();
+        let startTime = process.hrtime();
+        let hashes = await hashFiles(files);
+        let diffTime = process.hrtime(startTime)[0];
+        console.log(`hashing took ${sToTime(diffTime)}`);
+        console.log(`hashed ${hashes.length} files`);
+    
+        startTime = process.hrtime();
+        let output = await compareHashes(hashes);
+        diffTime = process.hrtime(startTime)[0];
+        console.log(`comparing took ${sToTime(diffTime)}`);
+        deletedFiles = [...deletedFiles, ...output];
+    }
+
     return deletedFiles;
 }
 
 module.exports.RemoveDuplicates = RemoveDuplicates;
+
+function sToTime(duration) {
+    return new Date(duration * 1000).toISOString().substr(11,8);
+}
+
